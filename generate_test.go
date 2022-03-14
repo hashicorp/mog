@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
@@ -134,7 +133,9 @@ func TestImports(t *testing.T) {
 			byAlias:   map[string]string{"foo": "example.com/foo"},
 			hasAlias:  make(map[string]struct{}),
 		}
-		assert.DeepEqual(t, expected, imp, gocmp.AllowUnexported(imports{}))
+		assert.DeepEqual(t, expected.byAlias, imp.byAlias)
+		assert.DeepEqual(t, expected.byPkgPath, imp.byPkgPath)
+		assert.DeepEqual(t, expected.hasAlias, imp.hasAlias)
 	})
 
 	t.Run("AliasFor", func(t *testing.T) {

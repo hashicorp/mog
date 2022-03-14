@@ -9,23 +9,23 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestLoadSourceStructs(t *testing.T) {
+func BenchmarkSourceStructs(b *testing.B) {
 	actual, err := loadSourceStructs("./internal/sourcepkg", packageLoadErrors)
-	require.NoError(t, err)
-	require.Equal(t, []string{"GroupedSample", "Sample"}, actual.StructNames())
+	require.NoError(b, err)
+	require.Equal(b, []string{"GroupedSample", "Sample"}, actual.StructNames())
 	_, ok := actual.Structs["Sample"]
-	require.True(t, ok)
+	require.True(b, ok)
 	_, ok = actual.Structs["GroupedSample"]
-	require.True(t, ok)
+	require.True(b, ok)
 
 	// TODO: check the value in structs map
 }
 
 // TODO: test non-built-in types
 // TODO: test types from other packages
-func TestLoadTargetStructs(t *testing.T) {
+func BenchmarkLoadTargetStructs(b *testing.B) {
 	actual, err := loadTargetStructs([]string{"./internal/targetpkgone", "./internal/targetpkgtwo"})
-	assert.NilError(t, err)
+	assert.NilError(b, err)
 
 	expected := map[string]targetPkg{
 		"github.com/hashicorp/mog/internal/targetpkgone": {
@@ -76,7 +76,7 @@ func TestLoadTargetStructs(t *testing.T) {
 		},
 	}
 
-	assert.DeepEqual(t, expected, actual, cmpTypesVar)
+	assert.DeepEqual(b, expected, actual, cmpTypesVar)
 }
 
 var cmpTypesVar = gocmp.Options{
