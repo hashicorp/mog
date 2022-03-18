@@ -24,7 +24,7 @@ func BenchmarkSourceStructs(b *testing.B) {
 // TODO: test non-built-in types
 // TODO: test types from other packages
 func BenchmarkLoadTargetStructs(b *testing.B) {
-	actual, err := loadTargetStructs([]string{"./internal/targetpkgone", "./internal/targetpkgtwo"})
+	actual, err := loadTargetStructs([]string{"./internal/targetpkgone", "./internal/targetpkgtwo"}, "")
 	assert.NilError(b, err)
 
 	expected := map[string]targetPkg{

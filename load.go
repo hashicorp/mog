@@ -53,11 +53,16 @@ type handlePkgLoadErr func(pkg *packages.Package) error
 
 // loadSourceStructs scans the provided package for struct definitions that
 // have mog annotations.
-func loadSourceStructs(path string, handleErr handlePkgLoadErr) (sourcePkg, error) {
+func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (sourcePkg, error) {
 	p := sourcePkg{Structs: map[string]structDecl{}}
 	cfg := &packages.Config{
 		Mode: modeLoadAll,
-		Env:  os.Environ(),
+	}
+	if tags == "" {
+		tags = os.Getenv("GOTAGS")
+	}
+	if tags != "" {
+		cfg.BuildFlags = []string{fmt.Sprintf("-tags=%s", tags)}
 	}
 	pkgs, err := packages.Load(cfg, path)
 	switch {
@@ -238,12 +243,18 @@ type targetStruct struct {
 	Fields []*types.Var
 }
 
-func loadTargetStructs(names []string) (map[string]targetPkg, error) {
+func loadTargetStructs(names []string, tags string) (map[string]targetPkg, error) {
 	mode := packages.NeedTypes | packages.NeedTypesInfo | packages.NeedName
 	cfg := &packages.Config{
 		Mode: mode,
-		Env:  os.Environ(),
 	}
+	if tags == "" {
+		tags = os.Getenv("GOTAGS")
+	}
+	if tags != "" {
+		cfg.BuildFlags = []string{fmt.Sprintf("-tags=%s", tags)}
+	}
+
 	pkgs, err := packages.Load(cfg, names...)
 	if err != nil {
 		return nil, err
