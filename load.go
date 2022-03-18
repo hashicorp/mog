@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -54,7 +55,10 @@ type handlePkgLoadErr func(pkg *packages.Package) error
 // have mog annotations.
 func loadSourceStructs(path string, handleErr handlePkgLoadErr) (sourcePkg, error) {
 	p := sourcePkg{Structs: map[string]structDecl{}}
-	cfg := &packages.Config{Mode: modeLoadAll}
+	cfg := &packages.Config{
+		Mode: modeLoadAll,
+		Env:  []string{os.Getenv("GOTAGS")},
+	}
 	pkgs, err := packages.Load(cfg, path)
 	switch {
 	case err != nil:
@@ -236,7 +240,10 @@ type targetStruct struct {
 
 func loadTargetStructs(names []string) (map[string]targetPkg, error) {
 	mode := packages.NeedTypes | packages.NeedTypesInfo | packages.NeedName
-	cfg := &packages.Config{Mode: mode}
+	cfg := &packages.Config{
+		Mode: mode,
+		Env:  []string{os.Getenv("GOTAGS")},
+	}
 	pkgs, err := packages.Load(cfg, names...)
 	if err != nil {
 		return nil, err
