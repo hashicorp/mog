@@ -57,7 +57,7 @@ func loadSourceStructs(path string, handleErr handlePkgLoadErr) (sourcePkg, erro
 	p := sourcePkg{Structs: map[string]structDecl{}}
 	cfg := &packages.Config{
 		Mode: modeLoadAll,
-		Env:  []string{os.Getenv("GOTAGS")},
+		Env:  os.Environ(),
 	}
 	pkgs, err := packages.Load(cfg, path)
 	switch {
@@ -242,7 +242,7 @@ func loadTargetStructs(names []string) (map[string]targetPkg, error) {
 	mode := packages.NeedTypes | packages.NeedTypesInfo | packages.NeedName
 	cfg := &packages.Config{
 		Mode: mode,
-		Env:  []string{os.Getenv("GOTAGS")},
+		Env:  os.Environ(),
 	}
 	pkgs, err := packages.Load(cfg, names...)
 	if err != nil {
