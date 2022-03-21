@@ -161,10 +161,12 @@ func convertibleButNotIdentical(typ, typeDecode types.Type) bool {
 		return false
 	}
 
+	if types.Identical(typ, typeDecode) {
+		return false
+	}
+
 	if types.ConvertibleTo(typ, typeDecode) && types.ConvertibleTo(typeDecode, typ) {
-		if !types.Identical(typ, typeDecode) {
-			return true
-		}
+		return true
 	}
 	return false
 }
