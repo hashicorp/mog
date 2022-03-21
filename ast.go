@@ -156,6 +156,7 @@ func newAssignStmtSlice(
 	rightElemType ast.Expr,
 	convertFuncName string,
 	direct bool,
+	convert bool,
 ) ast.Stmt {
 	return &ast.BlockStmt{List: []ast.Stmt{
 		// <left> = make(<leftType>, len(<right>))
@@ -196,6 +197,7 @@ func newAssignStmtSlice(
 					rightElemType,
 					convertFuncName,
 					direct,
+					convert,
 				),
 			}},
 		},
@@ -210,6 +212,7 @@ func newAssignStmtMap(
 	rightElemType ast.Expr,
 	convertFuncName string,
 	direct bool,
+	convert bool,
 ) ast.Stmt {
 	return &ast.BlockStmt{List: []ast.Stmt{
 		// <left> = make(<leftType>, len(<right>))
@@ -250,6 +253,7 @@ func newAssignStmtMap(
 					rightElemType,
 					convertFuncName,
 					direct,
+					convert,
 				),
 				newAssignStmtStructsAndPointers(
 					&ast.IndexExpr{
@@ -272,8 +276,18 @@ func newAssignStmt(
 	rightType ast.Expr,
 	convertFuncName string,
 	direct bool,
+	convert bool,
 ) ast.Stmt {
-	if convertFuncName != "" && !direct {
+	if direct && convert {
+		panic("direct and convert cannot both be set")
+	}
+	if convert {
+		right = &ast.CallExpr{
+			Fun:  leftType,
+			Args: []ast.Expr{right},
+		}
+	}
+	if convertFuncName != "" && !direct && !convert {
 		return newAssignStmtConvertible(
 			left,
 			leftType,

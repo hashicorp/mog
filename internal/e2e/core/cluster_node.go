@@ -5,7 +5,8 @@ import "github.com/hashicorp/mog/internal/e2e/core/inner"
 type Label string
 
 type ClusterNode struct {
-	ID string
+	ID    string
+	Label Label
 	// Labels []Label
 	// WorkPointer []*Workload
 
@@ -54,7 +55,8 @@ type StringSlice []string
 type WorkloadSlice []*Workload
 
 type Workload struct {
-	ID string
+	ID    string
+	Value int
 }
 
 type Other struct {

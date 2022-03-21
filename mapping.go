@@ -28,6 +28,9 @@ type singleAssignmentKind struct {
 	// Direct implies that no conversion is needed and direct assignment should
 	// occur.
 	Direct bool
+
+	// Convert implies that a simple type conversion is required.
+	Convert bool
 }
 
 var _ assignmentKind = (*singleAssignmentKind)(nil)
@@ -37,6 +40,9 @@ func (o *singleAssignmentKind) String() string {
 	s := fmt.Sprintf("%s := %s", debugPrintType(o.Left), debugPrintType(o.Right))
 	if o.Direct {
 		s += " (direct)"
+	}
+	if o.Convert {
+		s += " (convert)"
 	}
 	return s
 }
@@ -63,6 +69,10 @@ type sliceAssignmentKind struct {
 	// ElemDirect implies that no conversion is needed and direct assignment
 	// should occur for elements of the slice.
 	ElemDirect bool
+
+	// ElemConvert implies that a simple type conversion is required for
+	// elements of the slice.
+	ElemConvert bool
 }
 
 var _ assignmentKind = (*sliceAssignmentKind)(nil)
@@ -77,6 +87,9 @@ func (o *sliceAssignmentKind) String() string {
 	)
 	if o.ElemDirect {
 		s += " (direct)"
+	}
+	if o.ElemConvert {
+		s += " (convert)"
 	}
 	return s
 }
@@ -110,8 +123,12 @@ type mapAssignmentKind struct {
 	RightElem types.Type
 
 	// ElemDirect implies that no conversion is needed and direct assignment
-	// should occur for elements of the slice.
+	// should occur for elements of the map.
 	ElemDirect bool
+
+	// ElemConvert implies that a simple type conversion is required for
+	// elements of the map.
+	ElemConvert bool
 }
 
 var _ assignmentKind = (*mapAssignmentKind)(nil)
@@ -129,7 +146,27 @@ func (o *mapAssignmentKind) String() string {
 	if o.ElemDirect {
 		s += " (direct)"
 	}
+	if o.ElemConvert {
+		s += " (convert)"
+	}
 	return s
+}
+
+func convertibleButNotIdentical(typ, typeDecode types.Type) bool {
+	// Only allow this for basic and named.
+
+	switch typeDecode.(type) {
+	case *types.Basic, *types.Named:
+	default:
+		return false
+	}
+
+	if types.ConvertibleTo(typ, typeDecode) && types.ConvertibleTo(typeDecode, typ) {
+		if !types.Identical(typ, typeDecode) {
+			return true
+		}
+	}
+	return false
 }
 
 // computeAssignment attempts to determine how to assign something of the
@@ -157,6 +194,16 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 	rightTypeDecode, rightOk := decodeType(rightType)
 	if !leftOk || !rightOk {
 		return nil, false
+	}
+
+	if convertibleButNotIdentical(rightType, rightTypeDecode) ||
+		convertibleButNotIdentical(leftType, leftTypeDecode) {
+
+		return &singleAssignmentKind{
+			Left:    leftType,
+			Right:   rightType,
+			Convert: true,
+		}, true
 	}
 
 	switch left := leftTypeDecode.(type) {
@@ -200,11 +247,12 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 		}
 
 		return &sliceAssignmentKind{
-			Left:       leftType,
-			LeftElem:   left.Elem(),
-			Right:      rightType,
-			RightElem:  right.Elem(),
-			ElemDirect: op.Direct,
+			Left:        leftType,
+			LeftElem:    left.Elem(),
+			Right:       rightType,
+			RightElem:   right.Elem(),
+			ElemDirect:  op.Direct,
+			ElemConvert: op.Convert,
 		}, true
 	case *types.Map:
 		right, ok := rightTypeDecode.(*types.Map)
@@ -238,13 +286,14 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 		}
 
 		return &mapAssignmentKind{
-			Left:       leftType,
-			LeftKey:    left.Key(),
-			LeftElem:   left.Elem(),
-			Right:      rightType,
-			RightKey:   right.Key(),
-			RightElem:  right.Elem(),
-			ElemDirect: op.Direct,
+			Left:        leftType,
+			LeftKey:     left.Key(),
+			LeftElem:    left.Elem(),
+			Right:       rightType,
+			RightKey:    right.Key(),
+			RightElem:   right.Elem(),
+			ElemDirect:  op.Direct,
+			ElemConvert: op.Convert,
 		}, true
 	}
 

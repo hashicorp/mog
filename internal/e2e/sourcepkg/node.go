@@ -15,6 +15,7 @@ import (
 type Node struct {
 	ID     string
 	Weight int64
+	Label  string
 	// Labels []string
 	Meta map[string]interface{}
 	Work []Workload
@@ -71,4 +72,6 @@ type WorkloadSlice []Workload
 // output=node_gen.go
 type Workload struct {
 	ID string
+	// mog: func-to=int func-from=int32
+	Value int32
 }

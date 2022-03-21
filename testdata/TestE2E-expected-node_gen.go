@@ -9,6 +9,7 @@ func NodeToCore(s *Node, t *core.ClusterNode) {
 		return
 	}
 	t.ID = s.ID
+	t.Label = core.Label(s.Label)
 	t.O = s.O
 	t.I = s.I
 	WorkloadToCore(&s.F1, &t.F1)
@@ -171,6 +172,7 @@ func NodeFromCore(t *core.ClusterNode, s *Node) {
 		return
 	}
 	s.ID = t.ID
+	s.Label = string(t.Label)
 	s.O = t.O
 	s.I = t.I
 	WorkloadFromCore(&t.F1, &s.F1)
@@ -327,10 +329,12 @@ func WorkloadToCore(s *Workload, t *core.Workload) {
 		return
 	}
 	t.ID = s.ID
+	t.Value = int(s.Value)
 }
 func WorkloadFromCore(t *core.Workload, s *Workload) {
 	if s == nil {
 		return
 	}
 	s.ID = t.ID
+	s.Value = int32(t.Value)
 }
