@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
 	"gotest.tools/v3/icmd"
@@ -18,6 +19,25 @@ var (
 	shouldVet   = flag.Bool("vet-gen", true, "should we vet the generated code")
 	shouldPrint = flag.Bool("print-gen", false, "should we print the generated code")
 )
+
+func TestE2E_NoSourcesFound(t *testing.T) {
+	sourcepkg := "./internal/e2e/sourcepkg-empty"
+	// Cleanup the generated file when the test ends. The source must be a
+	// loadable Go package, so it can not be easily generated into a temporary
+	// directory.
+	output := "./internal/e2e/sourcepkg-empty/node_gen.go"
+	t.Cleanup(func() {
+		os.Remove(output)
+	})
+
+	args := []string{"mog", "-source", sourcepkg}
+	err := run(args)
+	assert.NilError(t, err)
+
+	_, err = os.Stat(output)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err), "expected not exist: %v", err)
+}
 
 func TestE2E(t *testing.T) {
 	if testing.Short() {
