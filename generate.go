@@ -180,6 +180,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.SourceExpr,
 				sourceField.ConvertFuncName(DirTo),
 				kind.Direct,
+				kind.Convert,
 			))
 			from.Body.List = append(from.Body.List, newAssignStmt(
 				srcExpr,
@@ -188,6 +189,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				targetTypeExpr,
 				sourceField.ConvertFuncName(DirFrom),
 				kind.Direct,
+				kind.Convert,
 			))
 		case *sliceAssignmentKind:
 			targetElemTypeElem := typeToExpr(kind.LeftElem, imports, true)
@@ -210,6 +212,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceElemTypeElem,
 				sourceField.ConvertFuncName(DirTo),
 				kind.ElemDirect,
+				kind.ElemConvert,
 			))
 			from.Body.List = append(from.Body.List, newAssignStmtSlice(
 				srcExpr,
@@ -219,6 +222,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				targetElemTypeElem,
 				sourceField.ConvertFuncName(DirFrom),
 				kind.ElemDirect,
+				kind.ElemConvert,
 			))
 		case *mapAssignmentKind:
 			targetKeyTypeElem := typeToExpr(kind.LeftKey, imports, true)
@@ -253,6 +257,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceElemTypeElem,
 				sourceField.ConvertFuncName(DirTo),
 				kind.ElemDirect,
+				kind.ElemConvert,
 			))
 			from.Body.List = append(from.Body.List, newAssignStmtMap(
 				srcExpr,
@@ -262,6 +267,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				targetElemTypeElem,
 				sourceField.ConvertFuncName(DirFrom),
 				kind.ElemDirect,
+				kind.ElemConvert,
 			))
 		}
 	}
