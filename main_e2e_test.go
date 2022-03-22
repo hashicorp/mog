@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
 	"gotest.tools/v3/icmd"
@@ -35,8 +34,7 @@ func TestE2E_NoSourcesFound(t *testing.T) {
 	assert.NilError(t, err)
 
 	_, err = os.Stat(output)
-	require.Error(t, err)
-	require.True(t, os.IsNotExist(err), "expected not exist: %v", err)
+	assert.ErrorType(t, err, os.IsNotExist)
 }
 
 func TestE2E(t *testing.T) {
