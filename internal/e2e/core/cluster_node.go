@@ -1,6 +1,10 @@
 package core
 
-import "github.com/hashicorp/mog/internal/e2e/core/inner"
+import (
+	"time"
+
+	"github.com/hashicorp/mog/internal/e2e/core/inner"
+)
 
 type Label string
 
@@ -45,10 +49,15 @@ type ClusterNode struct {
 	M7 map[string]Workload
 	M8 map[string]*Workload
 
-	// S1 Workload  // for testing struct-to-struct for slices
-	// S2 *Workload // for testing ptr-to-ptr for slices
-	// S3 Workload  // for testing ptr-to-struct for slices
-	// S4 *Workload // for testing struct-to-ptr for slices
+	// T1 time.Time // for testing struct-to-struct for time
+	// T2 *time.Time // for testing ptr-to-ptr for time
+	T3 time.Time // for testing ptr-to-struct for time
+	// T4 *time.Time // for testing struct-to-ptr for time
+
+	// D1 time.Duration // for testing struct-to-struct for duration
+	// D2 *time.Duration // for testing ptr-to-ptr for duration
+	D3 time.Duration // for testing ptr-to-struct for duration
+	// D4 *time.Duration // for testing struct-to-ptr for duration
 }
 
 type StringSlice []string

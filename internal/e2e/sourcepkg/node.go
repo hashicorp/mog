@@ -1,6 +1,9 @@
 package sourcepkg
 
 import (
+	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/golang/protobuf/ptypes/timestamp"
+
 	"github.com/hashicorp/mog/internal/e2e/core"
 	"github.com/hashicorp/mog/internal/e2e/core/inner"
 )
@@ -56,10 +59,15 @@ type Node struct {
 	M7 map[string]*Workload
 	M8 map[string]Workload
 
-	// S1 Workload  // for testing struct-to-struct for slices
-	// S2 *Workload // for testing ptr-to-ptr for slices
-	// S3 *Workload // for testing ptr-to-struct for slices
-	// S4 Workload  // for testing struct-to-ptr for slices
+	// T1 timestamp.Timestamp  // for testing struct-to-struct for time
+	// T2 *timestamp.Timestamp // for testing ptr-to-ptr for time
+	T3 *timestamp.Timestamp // for testing ptr-to-struct for time
+	// T4 timestamp.Timestamp  // for testing struct-to-ptr for time
+
+	// D1 duration.Duration  // for testing struct-to-struct for duration
+	// D2 *duration.Duration // for testing ptr-to-ptr for duration
+	D3 *duration.Duration // for testing ptr-to-struct for duration
+	// D4 duration.Duration  // for testing struct-to-ptr for duration
 }
 
 type StringSlice []string

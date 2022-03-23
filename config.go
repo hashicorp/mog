@@ -80,6 +80,15 @@ type Direction string
 
 func (d Direction) String() string { return string(d) }
 
+func (d Direction) Reverse() Direction {
+	if d == DirFrom {
+		return DirTo
+	} else if d == DirTo {
+		return DirFrom
+	}
+	return d
+}
+
 const (
 	DirFrom Direction = "From"
 	DirTo   Direction = "To"
