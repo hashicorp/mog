@@ -19,6 +19,24 @@ var (
 	shouldPrint = flag.Bool("print-gen", false, "should we print the generated code")
 )
 
+func TestE2E_NoSourcesFound(t *testing.T) {
+	sourcepkg := "./internal/e2e/sourcepkg-empty"
+	// Cleanup the generated file when the test ends. The source must be a
+	// loadable Go package, so it can not be easily generated into a temporary
+	// directory.
+	output := "./internal/e2e/sourcepkg-empty/node_gen.go"
+	t.Cleanup(func() {
+		os.Remove(output)
+	})
+
+	args := []string{"mog", "-source", sourcepkg}
+	err := run(args)
+	assert.NilError(t, err)
+
+	_, err = os.Stat(output)
+	assert.ErrorType(t, err, os.IsNotExist)
+}
+
 func TestE2E(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e test too slow for -short")
