@@ -64,6 +64,17 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 	if tags != "" {
 		cfg.BuildFlags = []string{fmt.Sprintf("-tags=%s", tags)}
 	}
+
+	{
+		fi, err := os.Stat(path)
+		if err != nil {
+			return p, err
+		}
+		if !fi.IsDir() {
+			return p, fmt.Errorf("source argument must not be a file")
+		}
+	}
+
 	pkgs, err := packages.Load(cfg, path)
 	switch {
 	case err != nil:
