@@ -78,7 +78,7 @@ func runMog(opts options) error {
 	}
 
 	if len(cfg.Structs) == 0 {
-		fmt.Printf("no source structs found in %v", opts.source)
+		log.Printf("no source structs found in %v", opts.source)
 		return nil
 	}
 
