@@ -119,6 +119,9 @@ func configsFromAnnotations(pkg sourcePkg) (config, error) {
 		}
 
 		for _, typedField := range strct.Fields {
+			if typedField.Var == nil {
+				continue // skip unexported field
+			}
 			f, err := parseFieldAnnotation(typedField.Field)
 			if err != nil {
 				return c, fmt.Errorf("from source struct %v: %w", name, err)
