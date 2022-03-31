@@ -70,7 +70,7 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 	var glob string
 	if strings.Contains(path, "*") {
 		path, glob = stdpath.Split(path)
-		path = path[0 : len(path)-1] // remove trailing slash
+		path = strings.TrimSuffix(path, "/") // remove trailing slash
 	}
 
 	if glob != "" {
