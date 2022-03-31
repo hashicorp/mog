@@ -285,7 +285,7 @@ func fmtErrors(msg string, errs []error) error {
 }
 
 // TODO: test cases
-func applyAutoConvertFunctions(cfgs []structConfig) []structConfig {
+func applyAutoConvertFunctions(localPackage string, cfgs []structConfig) []structConfig {
 	// Index the structs by name so any struct can refer to conversion
 	// functions for any other struct.
 	byName := make(map[string]structConfig, len(cfgs))
@@ -294,8 +294,9 @@ func applyAutoConvertFunctions(cfgs []structConfig) []structConfig {
 	}
 
 	for structIdx, s := range cfgs {
-		imports := newImports()
+		imports := newImports(localPackage)
 		imports.Add("", s.Target.Package)
+		imports.NeedInFile(s.Target.Package)
 
 		for fieldIdx, f := range s.Fields {
 			if _, ignored := s.IgnoreFields[f.SourceName]; ignored {

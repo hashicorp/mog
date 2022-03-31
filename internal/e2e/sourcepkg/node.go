@@ -20,6 +20,7 @@ type Node struct {
 	Meta map[string]interface{}
 	Work []Workload
 	// WorkPointer []*Workload
+	InnerLabel string
 
 	O *core.Other
 	I inner.Inner

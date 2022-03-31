@@ -9,6 +9,7 @@ type ClusterNode struct {
 	Label Label
 	// Labels []Label
 	// WorkPointer []*Workload
+	InnerLabel inner.Label
 
 	O *Other
 	I inner.Inner
