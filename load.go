@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"go/types"
 	"os"
+	stdpath "path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -65,6 +67,40 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 		cfg.BuildFlags = []string{fmt.Sprintf("-tags=%s", tags)}
 	}
 
+	var glob string
+	if strings.Contains(path, "*") {
+		path, glob = stdpath.Split(path)
+		path = strings.TrimSuffix(path, "/") // remove trailing slash
+	}
+
+	if glob != "" {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return p, err
+		}
+
+		cfg.ParseFile = func(fset *token.FileSet, filename string, src []byte) (*ast.File, error) {
+			dir, err := filepath.Abs(filepath.Dir(filename))
+			if err != nil {
+				return nil, err
+			}
+
+			if dir == absPath {
+				// matches the -source root (the one we are editing and that the glob applies to)
+				name := filepath.Base(filename)
+				if match, err := filepath.Match(glob, name); err != nil {
+					return nil, err
+				} else if !match {
+					return nil, nil
+				}
+			}
+
+			// This is the default ParseFile implementation.
+			const mode = parser.AllErrors | parser.ParseComments
+			return parser.ParseFile(fset, filename, src, mode)
+		}
+	}
+
 	{
 		fi, err := os.Stat(path)
 		if err != nil {
@@ -79,6 +115,8 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 	switch {
 	case err != nil:
 		return p, err
+	case len(pkgs) == 0:
+		return p, fmt.Errorf("package not found")
 	case len(pkgs) > 1:
 		return p, fmt.Errorf("expected only one source package")
 	}
