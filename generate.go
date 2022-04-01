@@ -475,8 +475,10 @@ func (i *imports) Decl() *ast.GenDecl {
 
 	paths := make([]string, 0, len(i.byPkgPath))
 	for pkgPath := range i.byPkgPath {
-		if _, ok := i.neededInFile[pkgPath]; ok {
-			paths = append(paths, pkgPath)
+		if pkgPath != i.localPackage {
+			if _, ok := i.neededInFile[pkgPath]; ok {
+				paths = append(paths, pkgPath)
+			}
 		}
 	}
 	sort.Strings(paths)

@@ -5,6 +5,7 @@ package sourcepkg
 import (
 	"github.com/hashicorp/mog/internal/e2e/core"
 	"github.com/hashicorp/mog/internal/e2e/core/inner"
+	"github.com/hashicorp/mog/internal/e2e/sourcepkg/outer"
 )
 
 func NodeToCore(s *Node, t *core.ClusterNode) {
@@ -14,6 +15,8 @@ func NodeToCore(s *Node, t *core.ClusterNode) {
 	t.ID = s.ID
 	t.Label = core.Label(s.Label)
 	t.InnerLabel = inner.Label(s.InnerLabel)
+	t.InnerLabel2 = inner.Label(s.InnerLabel2)
+	t.InnerLabel3 = inner.Label(s.InnerLabel3)
 	t.O = s.O
 	t.I = s.I
 	WorkloadToCore(&s.F1, &t.F1)
@@ -178,6 +181,8 @@ func NodeFromCore(t *core.ClusterNode, s *Node) {
 	s.ID = t.ID
 	s.Label = string(t.Label)
 	s.InnerLabel = string(t.InnerLabel)
+	s.InnerLabel2 = outer.Label(t.InnerLabel2)
+	s.InnerLabel3 = LocalLabel(t.InnerLabel3)
 	s.O = t.O
 	s.I = t.I
 	WorkloadFromCore(&t.F1, &s.F1)
