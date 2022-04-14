@@ -4,10 +4,10 @@ workflows:
   ci:
     jobs:
       - lint
-      - go-test-1-17:
+      - go-test:
           name: test
           version: "1.17"
-      - go-test-1.18:
+      - go-test:
           name: test
           version: "1.18"
 
