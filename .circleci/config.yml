@@ -4,9 +4,12 @@ workflows:
   ci:
     jobs:
       - lint
-      - go-test:
+      - go-test-1-17:
           name: test
           version: "1.17"
+      - go-test-1.18:
+          name: test
+          version: "1.18"
 
 executors:
   golang:
@@ -29,7 +32,7 @@ jobs:
   lint:
     executor:
       name: golang
-      version: "1.17"
+      version: "1.18"
     steps:
       - checkout
       - run: go mod download
