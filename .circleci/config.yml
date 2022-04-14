@@ -5,8 +5,11 @@ workflows:
     jobs:
       - lint
       - go-test:
-          name: test
+          name: "test on go 1.17"
           version: "1.17"
+      - go-test:
+          name: "test on go 1.18"
+          version: "1.18"
 
 executors:
   golang:
@@ -17,7 +20,7 @@ executors:
         type: string
         default: amd64
     docker:
-      - image: docker.mirror.hashicorp.services/circleci/golang:<<parameters.version>>
+      - image: docker.mirror.hashicorp.services/cimg/go:<<parameters.version>>
     environment:
       TEST_RESULTS_DIR: /tmp/test-results
       GOTRACEBACK: "all"
@@ -29,7 +32,7 @@ jobs:
   lint:
     executor:
       name: golang
-      version: "1.17"
+      version: "1.18"
     steps:
       - checkout
       - run: go mod download
