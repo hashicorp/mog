@@ -20,7 +20,7 @@ executors:
         type: string
         default: amd64
     docker:
-      - image: docker.mirror.hashicorp.services/circleci/golang:<<parameters.version>>
+      - image: docker.mirror.hashicorp.services/cimg/go:<<parameters.version>>
     environment:
       TEST_RESULTS_DIR: /tmp/test-results
       GOTRACEBACK: "all"
