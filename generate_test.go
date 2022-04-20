@@ -76,7 +76,7 @@ func TestGenerateConversion(t *testing.T) {
 			newField("ID", types.Typ[types.String]),
 		},
 	}
-	imports := newImports()
+	imports := newImports("TODO")
 	gen, err := generateConversion(c, target, imports)
 	assert.NilError(t, err)
 
@@ -115,14 +115,14 @@ func TestGenerateConversion_WithMissingSourceField(t *testing.T) {
 			newField("Name", types.Typ[types.String]),
 		},
 	}
-	imports := newImports()
+	imports := newImports("TODO")
 	_, err := generateConversion(c, target, imports)
 	expected := "struct Node is missing field Name. Add the missing field or exclude it"
 	assert.ErrorContains(t, err, expected)
 }
 
 func TestImports(t *testing.T) {
-	imp := newImports()
+	imp := newImports("TODO")
 
 	t.Run("add duplicate import", func(t *testing.T) {
 		imp.Add("", "example.com/foo")
@@ -150,6 +150,12 @@ func TestImports(t *testing.T) {
 		t.Skip("Decls value depends on previous subtests")
 	}
 	t.Run("Decls", func(t *testing.T) {
+		imp.NeedInFile("example.com/foo")
+		imp.NeedInFile("example.com/some/foo")
+		imp.NeedInFile("example.com/stars")
+
+		imp.Add("", "example.com/totally-ignored")
+
 		file := &ast.File{Name: &ast.Ident{Name: "src"}}
 		file.Decls = append(file.Decls, imp.Decl())
 		out, err := astToBytes(&token.FileSet{}, file)

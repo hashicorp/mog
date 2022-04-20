@@ -176,7 +176,7 @@ func convertibleButNotIdentical(typ, typeDecode types.Type) bool {
 //
 // If this is not possible, or not currently supported (nil, false) is
 // returned.
-func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
+func computeAssignment(leftType, rightType types.Type, imports *imports) (assignmentKind, bool) {
 	// First check if the types are naturally directly assignable. Only allow
 	// type pairs that are symmetrically assignable for simplicity.
 	if types.AssignableTo(rightType, leftType) {
@@ -200,6 +200,15 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 
 	if convertibleButNotIdentical(rightType, rightTypeDecode) ||
 		convertibleButNotIdentical(leftType, leftTypeDecode) {
+
+		if _, pkg := importFromType(leftType, imports); pkg != "" {
+			imports.Add("", pkg)
+			imports.NeedInFile(pkg)
+		}
+		if _, pkg := importFromType(rightType, imports); pkg != "" {
+			imports.Add("", pkg)
+			imports.NeedInFile(pkg)
+		}
 
 		return &singleAssignmentKind{
 			Left:    leftType,
@@ -238,7 +247,7 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 		}
 
 		// the elements have to be assignable
-		rawOp, ok := computeAssignment(left.Elem(), right.Elem())
+		rawOp, ok := computeAssignment(left.Elem(), right.Elem(), imports)
 		if !ok {
 			return nil, false
 		}
@@ -262,7 +271,7 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 			return nil, false
 		}
 
-		rawKeyOp, ok := computeAssignment(left.Key(), right.Key())
+		rawKeyOp, ok := computeAssignment(left.Key(), right.Key(), imports)
 		if !ok {
 			return nil, false
 		}
@@ -277,7 +286,7 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 		}
 
 		// the map values have to be assignable
-		rawOp, ok := computeAssignment(left.Elem(), right.Elem())
+		rawOp, ok := computeAssignment(left.Elem(), right.Elem(), imports)
 		if !ok {
 			return nil, false
 		}
