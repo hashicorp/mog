@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"go/types"
 )
@@ -10,6 +11,38 @@ import (
 type assignmentKind interface {
 	isAssignmentKind()
 	fmt.Stringer
+}
+
+type specialAssignmentAttributes struct {
+	// Convenience helpers
+	ProtobufTimestamp bool
+	ProtobufDuration  bool
+	ProtobufDirection Direction
+}
+
+func (s specialAssignmentAttributes) ReverseDirection() specialAssignmentAttributes {
+	s2 := s
+	s2.ProtobufDirection = s.ProtobufDirection.Reverse()
+	return s2
+}
+
+func (s specialAssignmentAttributes) IsZero() bool {
+	return s == specialAssignmentAttributes{}
+}
+
+func (s specialAssignmentAttributes) GoString() string {
+	return s.String()
+}
+
+func (s specialAssignmentAttributes) String() string {
+	switch {
+	case s.ProtobufTimestamp:
+		return "protobuf " + s.ProtobufDirection.String() + " timestamp"
+	case s.ProtobufDuration:
+		return "protobuf " + s.ProtobufDirection.String() + " duration"
+	default:
+		return ""
+	}
 }
 
 // singleAssignmentKind is a mapping operation between two fields that
@@ -31,6 +64,8 @@ type singleAssignmentKind struct {
 
 	// Convert implies that a simple type conversion is required.
 	Convert bool
+
+	Special specialAssignmentAttributes
 }
 
 var _ assignmentKind = (*singleAssignmentKind)(nil)
@@ -43,6 +78,9 @@ func (o *singleAssignmentKind) String() string {
 	}
 	if o.Convert {
 		s += " (convert)"
+	}
+	if !o.Special.IsZero() {
+		s += " (" + o.Special.String() + ")"
 	}
 	return s
 }
@@ -73,6 +111,8 @@ type sliceAssignmentKind struct {
 	// ElemConvert implies that a simple type conversion is required for
 	// elements of the slice.
 	ElemConvert bool
+
+	ElemSpecial specialAssignmentAttributes
 }
 
 var _ assignmentKind = (*sliceAssignmentKind)(nil)
@@ -90,6 +130,9 @@ func (o *sliceAssignmentKind) String() string {
 	}
 	if o.ElemConvert {
 		s += " (convert)"
+	}
+	if !o.ElemSpecial.IsZero() {
+		s += " (" + o.ElemSpecial.String() + ")"
 	}
 	return s
 }
@@ -129,6 +172,8 @@ type mapAssignmentKind struct {
 	// ElemConvert implies that a simple type conversion is required for
 	// elements of the map.
 	ElemConvert bool
+
+	ElemSpecial specialAssignmentAttributes
 }
 
 var _ assignmentKind = (*mapAssignmentKind)(nil)
@@ -148,6 +193,9 @@ func (o *mapAssignmentKind) String() string {
 	}
 	if o.ElemConvert {
 		s += " (convert)"
+	}
+	if !o.ElemSpecial.IsZero() {
+		s += " (" + o.ElemSpecial.String() + ")"
 	}
 	return s
 }
@@ -171,23 +219,71 @@ func convertibleButNotIdentical(typ, typeDecode types.Type) bool {
 	return false
 }
 
+func isAnyProtobufTimeOrDuration(types ...types.Type) bool {
+	for _, typ := range types {
+		switch {
+		case isProtobufDuration(typ), isProtobufTimestamp(typ):
+			return true
+		}
+	}
+	return false
+}
+
+func isProtobufDuration(typ types.Type) bool {
+	pt, ok := typ.(*types.Pointer)
+	if !ok {
+		return false
+	}
+	if nt, ok := pt.Elem().(*types.Named); ok {
+		return nt.String() == "github.com/golang/protobuf/ptypes/duration.Duration"
+	}
+	return false
+}
+
+func isProtobufTimestamp(typ types.Type) bool {
+	pt, ok := typ.(*types.Pointer)
+	if !ok {
+		return false
+	}
+	if nt, ok := pt.Elem().(*types.Named); ok {
+		return nt.String() == "github.com/golang/protobuf/ptypes/timestamp.Timestamp"
+	}
+	return false
+}
+
+func isGoDuration(typ types.Type) bool {
+	if nt, ok := typ.(*types.Named); ok {
+		return nt.String() == "time.Duration"
+	}
+	return false
+}
+
+func isGoTime(typ types.Type) bool {
+	if nt, ok := typ.(*types.Named); ok {
+		return nt.String() == "time.Time"
+	}
+	return false
+}
+
+var errAssignmentNotSupported = errors.New("assignment not supported")
+
 // computeAssignment attempts to determine how to assign something of the
 // rightType to something of the leftType.
 //
-// If this is not possible, or not currently supported (nil, false) is
-// returned.
-func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
+// If this is not possible, or not currently supported
+// errAssignmentNotSupported is returned.
+func computeAssignment(leftType, rightType types.Type, imports *imports) (assignmentKind, error) {
 	// First check if the types are naturally directly assignable. Only allow
 	// type pairs that are symmetrically assignable for simplicity.
 	if types.AssignableTo(rightType, leftType) {
 		if !types.AssignableTo(leftType, rightType) {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 		return &singleAssignmentKind{
 			Left:   leftType,
 			Right:  rightType,
 			Direct: true,
-		}, true
+		}, nil
 	}
 
 	// We don't really care about type aliases or pointerness here, so peel
@@ -195,7 +291,38 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 	leftTypeDecode, leftOk := decodeType(leftType)
 	rightTypeDecode, rightOk := decodeType(rightType)
 	if !leftOk || !rightOk {
-		return nil, false
+		return nil, errAssignmentNotSupported
+	}
+
+	if isAnyProtobufTimeOrDuration(leftType, rightType) {
+		// Note: we only do conversions for non-pointer stdlib to pointer
+		// protobufs with no aliasing.
+
+		kind := &singleAssignmentKind{
+			Left:  leftType,
+			Right: rightType,
+		}
+		switch {
+		case isProtobufTimestamp(leftType) && isGoTime(rightType):
+			kind.Special.ProtobufTimestamp = true
+			kind.Special.ProtobufDirection = DirTo
+		case isProtobufDuration(leftType) && isGoDuration(rightType):
+			kind.Special.ProtobufDuration = true
+			kind.Special.ProtobufDirection = DirTo
+		case isGoTime(leftType) && isProtobufTimestamp(rightType):
+			kind.Special.ProtobufTimestamp = true
+			kind.Special.ProtobufDirection = DirFrom
+		case isGoDuration(leftType) && isProtobufDuration(rightType):
+			kind.Special.ProtobufDuration = true
+			kind.Special.ProtobufDirection = DirFrom
+		default:
+			// will require a helper function
+			return nil, fmt.Errorf("one struct field is a protobuf time or duration and requires a user func")
+		}
+
+		imports.Add("", "github.com/golang/protobuf/ptypes")
+
+		return kind, nil
 	}
 
 	if convertibleButNotIdentical(rightType, rightTypeDecode) ||
@@ -205,7 +332,7 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 			Left:    leftType,
 			Right:   rightType,
 			Convert: true,
-		}, true
+		}, nil
 	}
 
 	switch left := leftTypeDecode.(type) {
@@ -213,39 +340,39 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 		// basic can only assign to basic
 		_, ok := rightTypeDecode.(*types.Basic)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 		return &singleAssignmentKind{
 			Left:   leftType,
 			Right:  rightType,
 			Direct: true,
-		}, true
+		}, nil
 	case *types.Named:
 		// named can only assign to named
 		_, ok := rightTypeDecode.(*types.Named)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 		return &singleAssignmentKind{
 			Left:  leftType,
 			Right: rightType,
-		}, true
+		}, nil
 	case *types.Slice:
 		// slices can only assign to slices
 		right, ok := rightTypeDecode.(*types.Slice)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 
 		// the elements have to be assignable
-		rawOp, ok := computeAssignment(left.Elem(), right.Elem())
-		if !ok {
-			return nil, false
+		rawOp, err := computeAssignment(left.Elem(), right.Elem(), imports)
+		if err != nil {
+			return nil, err
 		}
 
 		op, ok := rawOp.(*singleAssignmentKind)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 
 		return &sliceAssignmentKind{
@@ -255,36 +382,37 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 			RightElem:   right.Elem(),
 			ElemDirect:  op.Direct,
 			ElemConvert: op.Convert,
-		}, true
+			ElemSpecial: op.Special,
+		}, nil
 	case *types.Map:
 		right, ok := rightTypeDecode.(*types.Map)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 
-		rawKeyOp, ok := computeAssignment(left.Key(), right.Key())
-		if !ok {
-			return nil, false
+		rawKeyOp, err := computeAssignment(left.Key(), right.Key(), imports)
+		if err != nil {
+			return nil, err
 		}
 
 		// the map keys have to be directly assignable
 		keyOp, ok := rawKeyOp.(*singleAssignmentKind)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 		if !keyOp.Direct {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 
 		// the map values have to be assignable
-		rawOp, ok := computeAssignment(left.Elem(), right.Elem())
-		if !ok {
-			return nil, false
+		rawOp, err := computeAssignment(left.Elem(), right.Elem(), imports)
+		if err != nil {
+			return nil, err
 		}
 
 		op, ok := rawOp.(*singleAssignmentKind)
 		if !ok {
-			return nil, false
+			return nil, errAssignmentNotSupported
 		}
 
 		return &mapAssignmentKind{
@@ -296,8 +424,9 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 			RightElem:   right.Elem(),
 			ElemDirect:  op.Direct,
 			ElemConvert: op.Convert,
-		}, true
+			ElemSpecial: op.Special,
+		}, nil
 	}
 
-	return nil, false
+	return nil, errAssignmentNotSupported
 }

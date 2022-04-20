@@ -14,6 +14,14 @@ func astAssign(left, right ast.Expr) ast.Stmt {
 	}
 }
 
+func astAssignMulti(left, right []ast.Expr) ast.Stmt {
+	return &ast.AssignStmt{
+		Lhs: left,
+		Tok: token.ASSIGN,
+		Rhs: right,
+	}
+}
+
 func astDeclare(varName string, varType ast.Expr) ast.Stmt {
 	return &ast.DeclStmt{Decl: &ast.GenDecl{
 		Tok: token.VAR,
@@ -157,6 +165,7 @@ func newAssignStmtSlice(
 	convertFuncName string,
 	direct bool,
 	convert bool,
+	special specialAssignmentAttributes,
 ) ast.Stmt {
 	return &ast.BlockStmt{List: []ast.Stmt{
 		// <left> = make(<leftType>, len(<right>))
@@ -198,6 +207,7 @@ func newAssignStmtSlice(
 					convertFuncName,
 					direct,
 					convert,
+					special,
 				),
 			}},
 		},
@@ -213,6 +223,7 @@ func newAssignStmtMap(
 	convertFuncName string,
 	direct bool,
 	convert bool,
+	special specialAssignmentAttributes,
 ) ast.Stmt {
 	return &ast.BlockStmt{List: []ast.Stmt{
 		// <left> = make(<leftType>, len(<right>))
@@ -254,6 +265,7 @@ func newAssignStmtMap(
 					convertFuncName,
 					direct,
 					convert,
+					special,
 				),
 				newAssignStmtStructsAndPointers(
 					&ast.IndexExpr{
@@ -277,16 +289,55 @@ func newAssignStmt(
 	convertFuncName string,
 	direct bool,
 	convert bool,
+	special specialAssignmentAttributes,
 ) ast.Stmt {
-	if direct && convert {
+	switch {
+	case direct && convert:
 		panic("direct and convert cannot both be set")
+	case direct && !special.IsZero():
+		panic("direct and special cannot both be set")
+	case convert && !special.IsZero():
+		panic("convert and special cannot both be set")
 	}
+
 	if convert {
 		right = &ast.CallExpr{
 			Fun:  leftType,
 			Args: []ast.Expr{right},
 		}
 	}
+
+	switch {
+	case special.ProtobufDuration && special.ProtobufDirection == DirTo:
+		// struct-to-pointer
+		return newAssignStmtUserFunc(
+			left,
+			right,
+			"ptypes.DurationProto",
+		)
+	case special.ProtobufDuration && special.ProtobufDirection == DirFrom:
+		// pointer-to-struct
+		return newAssignMultiStmtUserFunc(
+			[]ast.Expr{left, &ast.Ident{Name: "_"}},
+			[]ast.Expr{right},
+			"ptypes.Duration",
+		)
+	case special.ProtobufTimestamp && special.ProtobufDirection == DirTo:
+		// struct-to-pointer
+		return newAssignMultiStmtUserFunc(
+			[]ast.Expr{left, &ast.Ident{Name: "_"}},
+			[]ast.Expr{right},
+			"ptypes.TimestampProto",
+		)
+	case special.ProtobufTimestamp && special.ProtobufDirection == DirFrom:
+		// pointer-to-struct
+		return newAssignMultiStmtUserFunc(
+			[]ast.Expr{left, &ast.Ident{Name: "_"}},
+			[]ast.Expr{right},
+			"ptypes.Timestamp",
+		)
+	}
+
 	if convertFuncName != "" && !direct && !convert {
 		return newAssignStmtConvertible(
 			left,
@@ -317,6 +368,24 @@ func newAssignStmtUserFunc(
 	return astAssign(left, &ast.CallExpr{
 		Fun:  &ast.Ident{Name: userFuncName},
 		Args: []ast.Expr{right},
+	})
+}
+
+func newAssignMultiStmtUserFunc(
+	left []ast.Expr,
+	right []ast.Expr,
+	userFuncName string,
+) ast.Stmt {
+	// No special handling for pointers here if someone used the mog
+	// annotations themselves. The assumption is the user knows what
+	// they're doing.
+
+	// <left1>, <left2>, ... = <funcName>(<right1>, <right2>, ...)
+	return astAssignMulti(left, []ast.Expr{
+		&ast.CallExpr{
+			Fun:  &ast.Ident{Name: userFuncName},
+			Args: right,
+		},
 	})
 }
 

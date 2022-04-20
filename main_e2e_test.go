@@ -20,7 +20,7 @@ var (
 )
 
 func TestE2E_NoSourcesFound(t *testing.T) {
-	sourcepkg := "./internal/e2e/sourcepkg-empty"
+	sourcepkg := "./sourcepkg-empty"
 	// Cleanup the generated file when the test ends. The source must be a
 	// loadable Go package, so it can not be easily generated into a temporary
 	// directory.
@@ -29,7 +29,7 @@ func TestE2E_NoSourcesFound(t *testing.T) {
 		os.Remove(output)
 	})
 
-	args := []string{"mog", "-source", sourcepkg}
+	args := []string{"mog", "-source", sourcepkg, "-modworkdir", "./internal/e2e"}
 	err := run(args)
 	assert.NilError(t, err)
 
@@ -42,7 +42,7 @@ func TestE2E(t *testing.T) {
 		t.Skip("e2e test too slow for -short")
 	}
 
-	sourcepkg := "./internal/e2e/sourcepkg"
+	sourcepkg := "./sourcepkg"
 	// Cleanup the generated file when the test ends. The source must be a
 	// loadable Go package, so it can not be easily generated into a temporary
 	// directory.
@@ -51,13 +51,17 @@ func TestE2E(t *testing.T) {
 		os.Remove(output)
 	})
 
-	args := []string{"mog", "-source", sourcepkg}
+	args := []string{"mog", "-source", sourcepkg, "-modworkdir", "./internal/e2e"}
 	err := run(args)
 	assert.NilError(t, err)
 
 	if *shouldVet {
 		// go vet the file to check that it is valid Go syntax
-		icmd.RunCommand("go", "vet", sourcepkg).Assert(t, icmd.Success)
+		// icmd.RunCommand("go", "vet", sourcepkg).Assert(t, icmd.Success)
+		icmd.RunCmd(icmd.Cmd{
+			Command: []string{"go", "vet", sourcepkg},
+			Dir:     "./internal/e2e",
+		}).Assert(t, icmd.Success)
 	}
 
 	actual, err := ioutil.ReadFile(output)

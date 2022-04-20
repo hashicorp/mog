@@ -165,9 +165,9 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 		}
 
 		// the assignmentKind is <target> := <source> so target==LHS source==RHS
-		rawKind, ok := computeAssignment(field.Type(), sourceField.SourceType)
-		if !ok {
-			assignErrFn(nil)
+		rawKind, err := computeAssignment(field.Type(), sourceField.SourceType, imports)
+		if err != nil {
+			assignErrFn(err)
 			continue
 		}
 
@@ -181,6 +181,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.ConvertFuncName(DirTo),
 				kind.Direct,
 				kind.Convert,
+				kind.Special,
 			))
 			from.Body.List = append(from.Body.List, newAssignStmt(
 				srcExpr,
@@ -190,6 +191,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.ConvertFuncName(DirFrom),
 				kind.Direct,
 				kind.Convert,
+				kind.Special.ReverseDirection(),
 			))
 		case *sliceAssignmentKind:
 			targetElemTypeElem := typeToExpr(kind.LeftElem, imports, true)
@@ -213,6 +215,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.ConvertFuncName(DirTo),
 				kind.ElemDirect,
 				kind.ElemConvert,
+				kind.ElemSpecial,
 			))
 			from.Body.List = append(from.Body.List, newAssignStmtSlice(
 				srcExpr,
@@ -223,6 +226,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.ConvertFuncName(DirFrom),
 				kind.ElemDirect,
 				kind.ElemConvert,
+				kind.ElemSpecial.ReverseDirection(),
 			))
 		case *mapAssignmentKind:
 			targetKeyTypeElem := typeToExpr(kind.LeftKey, imports, true)
@@ -258,6 +262,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.ConvertFuncName(DirTo),
 				kind.ElemDirect,
 				kind.ElemConvert,
+				kind.ElemSpecial,
 			))
 			from.Body.List = append(from.Body.List, newAssignStmtMap(
 				srcExpr,
@@ -268,6 +273,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 				sourceField.ConvertFuncName(DirFrom),
 				kind.ElemDirect,
 				kind.ElemConvert,
+				kind.ElemSpecial.ReverseDirection(),
 			))
 		}
 	}

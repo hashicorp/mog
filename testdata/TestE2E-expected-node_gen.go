@@ -2,7 +2,10 @@
 
 package sourcepkg
 
-import "github.com/hashicorp/mog/internal/e2e/core"
+import (
+	"github.com/golang/protobuf/ptypes"
+	"github.com/hashicorp/mog/internal/e2e/core"
+)
 
 func NodeToCore(s *Node, t *core.ClusterNode) {
 	if s == nil {
@@ -166,6 +169,8 @@ func NodeToCore(s *Node, t *core.ClusterNode) {
 			t.M8[k] = y
 		}
 	}
+	t.T3, _ = ptypes.Timestamp(s.T3)
+	t.D3, _ = ptypes.Duration(s.D3)
 }
 func NodeFromCore(t *core.ClusterNode, s *Node) {
 	if s == nil {
@@ -323,6 +328,8 @@ func NodeFromCore(t *core.ClusterNode, s *Node) {
 			s.M8[k] = y
 		}
 	}
+	s.T3, _ = ptypes.TimestampProto(t.T3)
+	s.D3 = ptypes.DurationProto(t.D3)
 }
 func WorkloadToCore(s *Workload, t *core.Workload) {
 	if s == nil {
