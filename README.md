@@ -100,3 +100,4 @@ directives:
 
     // unfortunate protobuf camel-casing help (protoc will uppercase the first x)
     mog: target=EnforcingConsecutive5xx
+test
