@@ -136,18 +136,12 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 	for ident, obj := range pkg.TypesInfo.Defs {
 		// skip unexported structs, and exported fields by looking for a nil
 		// parent scope.
-		if obj == nil {
+		if obj == nil || !obj.Exported() || obj.Parent() == nil {
 			continue
 		}
 
 		named, ok := obj.Type().(*types.Named)
 		if !ok {
-			continue
-		}
-
-		fmt.Printf("%v has underlying type %+v\n", ident, named.Underlying())
-
-		if !obj.Exported() || obj.Parent() == nil {
 			continue
 		}
 
