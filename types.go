@@ -93,8 +93,7 @@ func typeToExpr(t types.Type, imports *imports, element bool) (x ast.Expr) {
 
 	case *types.TypeParam: // needed for generic struct field types
 		// TODO: implement conversion here
-
-		return &ast.InterfaceType{}
+		return &ast.Ident{Name: x.Underlying().String()}
 
 	}
 
@@ -107,7 +106,7 @@ func typeToExpr(t types.Type, imports *imports, element bool) (x ast.Expr) {
 // Note this does not descend into Slices or Maps, and it doesn't handle ALL
 // possible type assignments, just the reasonable ones.
 //
-// Emits only: Basic, Named[Struct], Slice, Map
+// Emits only: Basic, Named[Struct], Slice, Map, TypeParam
 func decodeType(t types.Type) (types.Type, bool) {
 	switch x := t.(type) {
 	case *types.Basic:
@@ -131,6 +130,8 @@ func decodeType(t types.Type) (types.Type, bool) {
 	case *types.Slice:
 		return x, true
 	case *types.Map:
+		return x, true
+	case *types.TypeParam:
 		return x, true
 	}
 	return nil, false

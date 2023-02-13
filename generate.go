@@ -167,6 +167,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 		// the assignmentKind is <target> := <source> so target==LHS source==RHS
 		rawKind, ok := computeAssignment(field.Type(), sourceField.SourceType)
 		if !ok {
+			fmt.Printf("HOLD UP WAIT ------- %T, %T", field.Type(), sourceField.SourceType)
 			assignErrFn(nil)
 			continue
 		}

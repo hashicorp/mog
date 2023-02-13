@@ -15,9 +15,9 @@ type assignmentKind interface {
 // singleAssignmentKind is a mapping operation between two fields that
 // ultimately are:
 //
-//  - basic
-//  - named structs
-//  - pointers to either of the above
+//   - basic
+//   - named structs
+//   - pointers to either of the above
 type singleAssignmentKind struct {
 	// Left is the original type of the LHS of the assignment.
 	Left types.Type
@@ -223,6 +223,16 @@ func computeAssignment(leftType, rightType types.Type) (assignmentKind, bool) {
 	case *types.Named:
 		// named can only assign to named
 		_, ok := rightTypeDecode.(*types.Named)
+		if !ok {
+			return nil, false
+		}
+		return &singleAssignmentKind{
+			Left:  leftType,
+			Right: rightType,
+		}, true
+	case *types.TypeParam:
+		// typeparam can only assign to typeparam
+		_, ok := rightTypeDecode.(*types.TypeParam)
 		if !ok {
 			return nil, false
 		}
