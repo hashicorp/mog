@@ -1,7 +1,11 @@
 package status
 
 type Status[T ConditionType] struct {
-	Conditions map[T]bool
+	Conditions []Condition[T]
+}
+
+type Condition[T ConditionType] struct {
+	Type T
 }
 
 type ConditionType interface {
