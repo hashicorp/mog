@@ -3,7 +3,6 @@ package sourcepkg
 import (
 	"github.com/hashicorp/mog/internal/e2e/core"
 	"github.com/hashicorp/mog/internal/e2e/core/inner"
-	"github.com/hashicorp/mog/internal/e2e/core/status"
 )
 
 // Node source structure for e2e testing mog.
@@ -24,7 +23,7 @@ type Node struct {
 
 	O *core.Other
 	I inner.Inner
-	S status.Status[status.NodeCondition] // for testing generic structs
+	S Status[NodeCondition] // for testing generic structs
 
 	F1 Workload  // for testing struct-to-struct
 	F2 *Workload // for testing ptr-to-ptr
@@ -77,3 +76,28 @@ type Workload struct {
 	// mog: func-to=int func-from=int32
 	Value int32
 }
+
+// mog annotation:
+//
+// name=Core
+// target=github.com/hashicorp/mog/internal/e2e/core.Status
+// output=node_gen.go
+type Status[T ConditionType] struct {
+	Conditions []Condition[T]
+}
+
+// mog annotation:
+//
+// name=Core
+// target=github.com/hashicorp/mog/internal/e2e/core.Condition
+// output=node_gen.go
+type Condition[T ConditionType] struct {
+	Type T
+}
+
+type ConditionType interface {
+	NodeCondition | WorkloadCondition
+}
+
+type NodeCondition string
+type WorkloadCondition string
