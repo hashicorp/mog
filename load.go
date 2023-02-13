@@ -145,6 +145,28 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 			continue
 		}
 
+		if named.TypeParams() != nil {
+			fmt.Printf("NAMED: %+v\n", named.TypeParams())
+
+			numParams := named.TypeParams().Len()
+			fmt.Printf("LEN: %+v\n", numParams)
+
+			// FIXME: convert from TypeParams to Types
+			params := make([]types.Type, numParams)
+			for i := 0; i < numParams; i++ {
+				params[i] = named.TypeParams().At(i)
+			}
+
+			_, err := types.Instantiate(nil, named.Underlying(), params, true)
+			if err != nil {
+				fmt.Println(err.Error())
+				// continue
+			}
+
+			// TODO: do something with instantiated type?
+			// continue
+		}
+
 		strct, ok := named.Underlying().(*types.Struct)
 		if !ok {
 			continue
