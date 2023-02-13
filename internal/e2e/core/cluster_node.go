@@ -12,6 +12,7 @@ type ClusterNode struct {
 
 	O *Other
 	I inner.Inner
+	S status.Status[NodeStatus] // for testing generic structs
 
 	F1 Workload  // for testing struct-to-struct
 	F2 *Workload // for testing ptr-to-ptr
@@ -62,3 +63,14 @@ type Workload struct {
 type Other struct {
 	N int
 }
+
+type Status[T StatusType] struct {
+	Conditions map[T]bool
+}
+
+type StatusType interface {
+	NodeType | WorkloadType
+}
+
+type NodeType string
+type WorkloadType string
