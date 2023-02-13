@@ -91,6 +91,9 @@ func typeToExpr(t types.Type, imports *imports, element bool) (x ast.Expr) {
 		}
 		return &ast.InterfaceType{}
 
+	default:
+		fmt.Printf("TYPE: %v\n", x)
+
 	}
 
 	return nil

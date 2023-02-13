@@ -136,12 +136,18 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 	for ident, obj := range pkg.TypesInfo.Defs {
 		// skip unexported structs, and exported fields by looking for a nil
 		// parent scope.
-		if obj == nil || !obj.Exported() || obj.Parent() == nil {
+		if obj == nil {
 			continue
 		}
 
 		named, ok := obj.Type().(*types.Named)
 		if !ok {
+			continue
+		}
+
+		fmt.Printf("%v has underlying type %+v\n", ident, named.Underlying())
+
+		if !obj.Exported() || obj.Parent() == nil {
 			continue
 		}
 
@@ -158,6 +164,16 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 			}
 		}
 		fieldVars[ident.Name] = fields
+	}
+
+	for ident, inst := range pkg.TypesInfo.Instances {
+		fmt.Printf("FIELD: %+v\n", ident)
+		fmt.Printf("TYPE: %+v\n", inst.Type)
+		for i := 0; i < inst.TypeArgs.Len(); i++ {
+			fmt.Printf("ARG: %+v\n", inst.TypeArgs.At(i))
+		}
+
+		// TODO: do something here?
 	}
 
 	for _, file := range pkg.Syntax {

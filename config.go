@@ -321,8 +321,10 @@ func applyAutoConvertFunctions(cfgs []structConfig) []structConfig {
 			case *types.Named:
 				// This only works for types in the source package.
 				decodedTypeExpr := typeToExpr(sourceTypeDecode, imports, false)
+				// fmt.Printf("DECODED TYPE EXPR: %v\n", decodedTypeExpr)
 				ident, ok = decodedTypeExpr.(*ast.Ident)
 				if !ok {
+					fmt.Printf("UNHANDLED DECODE: %v\n", ident)
 					continue
 				}
 			case *types.Slice:
