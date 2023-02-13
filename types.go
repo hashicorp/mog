@@ -91,8 +91,13 @@ func typeToExpr(t types.Type, imports *imports, element bool) (x ast.Expr) {
 		}
 		return &ast.InterfaceType{}
 
-	default:
-		fmt.Printf("TYPE: %v\n", x)
+	case *types.TypeParam: // needed for generic struct field types
+		if element {
+			return nil
+		}
+
+		// TODO: implement conversion here
+		return &ast.InterfaceType{}
 
 	}
 
