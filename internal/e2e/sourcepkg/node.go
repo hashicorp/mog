@@ -3,6 +3,7 @@ package sourcepkg
 import (
 	"github.com/hashicorp/mog/internal/e2e/core"
 	"github.com/hashicorp/mog/internal/e2e/core/inner"
+	"github.com/hashicorp/mog/internal/e2e/core/status"
 )
 
 // Node source structure for e2e testing mog.
@@ -23,6 +24,7 @@ type Node struct {
 
 	O *core.Other
 	I inner.Inner
+	S status.Status[status.NodeCondition] // for testing generic structs
 
 	F1 Workload  // for testing struct-to-struct
 	F2 *Workload // for testing ptr-to-ptr
