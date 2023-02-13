@@ -5,11 +5,14 @@ workflows:
     jobs:
       - lint
       - go-test:
-          name: "test on go 1.17"
-          version: "1.17"
-      - go-test:
           name: "test on go 1.18"
           version: "1.18"
+      - go-test:
+          name: "test on go 1.19"
+          version: "1.19"
+      - go-test:
+          name: "test on go 1.20"
+          version: "1.20"
 
 executors:
   golang:
