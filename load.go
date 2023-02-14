@@ -145,37 +145,53 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 			continue
 		}
 
-		if named.TypeParams() != nil {
-			fmt.Printf("NAMED: %+v\n", named.TypeParams())
+		// if named.TypeParams() != nil {
+		// 	fmt.Printf("NAMED: %+v\n", named.TypeParams())
 
-			numParams := named.TypeParams().Len()
-			fmt.Printf("LEN: %+v\n", numParams)
+		// 	numParams := named.TypeParams().Len()
+		// 	fmt.Printf("LEN: %+v\n", numParams)
 
-			// FIXME: convert from TypeParams to Types
-			params := make([]types.Type, numParams)
-			for i := 0; i < numParams; i++ {
-				params[i] = named.TypeParams().At(i)
-			}
+		// 	// FIXME: convert from TypeParams to Types
+		// 	params := make([]types.Type, numParams)
+		// 	for i := 0; i < numParams; i++ {
+		// 		params[i] = named.TypeParams().At(i)
+		// 	}
 
-			_, err := types.Instantiate(nil, named.Underlying(), params, true)
-			if err != nil {
-				fmt.Println(err.Error())
-				// continue
-			}
+		// 	_, err := types.Instantiate(nil, named.Underlying(), params, true)
+		// 	if err != nil {
+		// 		fmt.Println(err.Error())
+		// 		// continue
+		// 	}
 
-			// TODO: do something with instantiated type?
-			// continue
-		}
+		// 	// TODO: do something with instantiated type?
+		// 	// continue
+		// }
 
 		strct, ok := named.Underlying().(*types.Struct)
 		if !ok {
 			continue
 		}
 
+		if named.TypeParams() != nil {
+			fmt.Printf("STRUCT TYPE PARAMS: %+v\n", named.TypeParams())
+			// TODO: preserve these somewhere for writing to target
+		}
+
 		fields := make(map[string]*types.Var)
 		for i := 0; i < strct.NumFields(); i++ {
 			f := strct.Field(i)
 			if f.Exported() {
+				fNamed, ok := f.Type().(*types.Named)
+				if ok {
+					params := fNamed.TypeParams()
+					args := fNamed.TypeArgs()
+					if params != nil && args != nil {
+						fmt.Printf("STRUCT FIELD %s PARAMS: %+v\n", f.Name(), params)
+						fmt.Printf("STRUCT FIELD %s ARGS: %+v\n", f.Name(), args)
+						// TODO: preserve these somewhere for writing to target
+					}
+				}
+
 				fields[f.Name()] = f
 			}
 		}
