@@ -15,9 +15,9 @@ type assignmentKind interface {
 // singleAssignmentKind is a mapping operation between two fields that
 // ultimately are:
 //
-//  - basic
-//  - named structs
-//  - pointers to either of the above
+//   - basic
+//   - named structs
+//   - pointers to either of the above
 type singleAssignmentKind struct {
 	// Left is the original type of the LHS of the assignment.
 	Left types.Type
