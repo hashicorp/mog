@@ -1,0 +1,53 @@
+name: hashicorp/mog/ci
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+    tags: ["*"]
+
+jobs:
+  lint:
+    runs-on: runs-on: ['self-hosted', 'linux', 'small']
+    container:
+      image: docker.mirror.hashicorp.services/cimg/go:1.20
+    steps:
+    - uses: actions/checkout@v3.3.0
+    - run: go mod download
+    - name: check go fmt
+      run: |-
+        files=$(go fmt ./...)
+        if [ -n "$files" ]; then
+          echo "The following file(s) do not conform to go fmt:"
+          echo "$files"
+          exit 1
+        fi
+    - run: |
+        PACKAGE_NAMES=$(go list ./...)
+        go vet $PACKAGE_NAMES
+  go-test:
+    runs-on: ['self-hosted', 'linux', 'small']
+    container:
+      image: docker.mirror.hashicorp.services/cimg/go:${{ env.version }}
+    env:
+      version: '1.19'
+      goarch: amd64
+      args: "-race"
+    steps:
+    - run: go env
+    - uses: actions/checkout@v3.3.0
+    - run: mkdir -p $TEST_RESULTS_DIR
+    - name: run tests
+      run: |-
+        gotestsum --junitfile ${TEST_RESULTS_DIR}/junit.xml       -- -timeout=240s ${{ env.args }} .
+        gotestsum --junitfile ${TEST_RESULTS_DIR}/junit-batch.xml -- -timeout=240s ${{ env.args }} -tags batchtest .
+      env:
+        INTEG_TESTS: 'yes'
+        GOTESTSUM_FORMAT: short-verbose
+    - uses: actions/upload-artifact@v3.1.1
+      with:
+        path: "/tmp/test-results"
+    - uses: actions/upload-artifact@v3.1.1
+      with:
+        path: "/tmp/test-results"
+ 
