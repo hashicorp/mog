@@ -39,7 +39,4 @@ jobs:
     - name: run tests
       run: |-
         go test -tags batchtest ./...
-    - uses: actions/upload-artifact@v3.1.1
-      with:
-        path: "/tmp/test-results"
  
