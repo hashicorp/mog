@@ -1,7 +1,6 @@
 # mog
 
-mog [![CircleCI](https://circleci.com/gh/hashicorp/mog.svg?style=svg)](https://circleci.com/gh/hashicorp/mog)
-====
+[![Build Status](https://github.com/hashicorp/mog/workflows/ci/badge.svg)](https://github.com/hashicorp/mog/actions)
 
 mog is a [Go](http://www.golang.org) code generation tool for converting API types into Core types
 
