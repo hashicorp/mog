@@ -11,6 +11,31 @@ import (
 	"path"
 )
 
+func importFromType(t types.Type, imports *imports) (alias, pkg string) {
+	if os.Getenv("DEBUG_MOG") == "1" {
+		defer func() {
+			fmt.Printf("IMPORT-FROM-TYPE: [%T :: %+v] => [%q, %q]\n",
+				t, t, alias, pkg,
+			)
+		}()
+	}
+
+	switch x := t.(type) {
+	case *types.Basic:
+		return "", ""
+	case *types.Named:
+		target := x.Obj()
+		return target.Pkg().Name(), target.Pkg().Path()
+	case *types.Pointer:
+		return importFromType(x.Elem(), imports)
+	// case *types.Slice:
+	// case *types.Map:
+	// case *types.Interface:
+	default:
+		return "", ""
+	}
+}
+
 // typeToExpr converts a go/types representation of a type into a go/ast
 // representation of a type.
 //

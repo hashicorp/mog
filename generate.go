@@ -23,7 +23,7 @@ func generateFiles(cfg config, targets map[string]targetPkg) error {
 
 	for _, group := range byOutput {
 		var decls []ast.Decl
-		imports := newImports()
+		imports := newImports(cfg.SourcePkg.pkg.PkgPath)
 
 		for _, sourceStruct := range group {
 			t := targets[sourceStruct.Target.Package].Structs[sourceStruct.Target.Struct]
@@ -95,6 +95,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 	var g generated
 
 	imports.Add("", cfg.Target.Package)
+	imports.NeedInFile(cfg.Target.Package)
 
 	targetType := &ast.SelectorExpr{
 		X:   &ast.Ident{Name: path.Base(imports.AliasFor(cfg.Target.Package))},
@@ -130,6 +131,13 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 		targetExpr := &ast.SelectorExpr{
 			X:   &ast.Ident{Name: varNameTarget},
 			Sel: &ast.Ident{Name: name},
+		}
+
+		if _, pkg := importFromType(sourceField.SourceType, imports); pkg != "" {
+			imports.Add("", pkg) // source packages
+		}
+		if _, pkg := importFromType(field.Type(), imports); pkg != "" {
+			imports.Add("", pkg) // target packages
 		}
 
 		if sourceField.FuncTo != "" || sourceField.FuncFrom != "" {
@@ -168,7 +176,7 @@ func generateConversion(cfg structConfig, t targetStruct, imports *imports) (gen
 		}
 
 		// the assignmentKind is <target> := <source> so target==LHS source==RHS
-		rawKind, ok := computeAssignment(field.Type(), sourceField.SourceType)
+		rawKind, ok := computeAssignment(field.Type(), sourceField.SourceType, imports)
 		if !ok {
 			assignErrFn(nil)
 			continue
@@ -403,24 +411,34 @@ func writeFile(output string, contents []byte) error {
 }
 
 type imports struct {
-	byPkgPath map[string]string   // package => alias(or default)
-	byAlias   map[string]string   // alias(or default) => package
-	hasAlias  map[string]struct{} // package is using a non-default name
+	byPkgPath    map[string]string   // package => alias(or default)
+	byAlias      map[string]string   // alias(or default) => package
+	hasAlias     map[string]struct{} // package is using a non-default name
+	neededInFile map[string]struct{} // package import is required in file
+	localPackage string
 }
 
-func newImports() *imports {
+func newImports(localPackage string) *imports {
 	return &imports{
-		byPkgPath: make(map[string]string),
-		byAlias:   make(map[string]string),
-		hasAlias:  make(map[string]struct{}),
+		byPkgPath:    make(map[string]string),
+		byAlias:      make(map[string]string),
+		hasAlias:     make(map[string]struct{}),
+		neededInFile: make(map[string]struct{}),
+		localPackage: localPackage,
 	}
+}
+
+func (i *imports) NeedInFile(pkgPath string) {
+	if _, exists := i.byPkgPath[pkgPath]; !exists {
+		panic("Only call NeedInFile after Add")
+	}
+
+	i.neededInFile[pkgPath] = struct{}{}
 }
 
 // Add an import with an optional alias. If no alias is specified, the default
 // alias will be path.Base(). The alias for a package should always be looked up
 // from AliasFor.
-//
-// TODO: remove alias arg?
 func (i *imports) Add(alias string, pkgPath string) {
 	if _, exists := i.byPkgPath[pkgPath]; exists {
 		return
@@ -449,6 +467,9 @@ func (i *imports) Add(alias string, pkgPath string) {
 }
 
 func (i *imports) AliasFor(pkgPath string) string {
+	if pkgPath == i.localPackage {
+		return ""
+	}
 	return i.byPkgPath[pkgPath]
 }
 
@@ -457,7 +478,11 @@ func (i *imports) Decl() *ast.GenDecl {
 
 	paths := make([]string, 0, len(i.byPkgPath))
 	for pkgPath := range i.byPkgPath {
-		paths = append(paths, pkgPath)
+		if pkgPath != i.localPackage {
+			if _, ok := i.neededInFile[pkgPath]; ok {
+				paths = append(paths, pkgPath)
+			}
+		}
 	}
 	sort.Strings(paths)
 

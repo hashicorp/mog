@@ -90,7 +90,7 @@ func runMog(opts options) error {
 		return fmt.Errorf("failed to load targets: %w", err)
 	}
 
-	cfg.Structs = applyAutoConvertFunctions(cfg.Structs)
+	cfg.Structs = applyAutoConvertFunctions(cfg.SourcePkg.pkg.PkgPath, cfg.Structs)
 
 	log.Printf("Generating code for %d structs", len(cfg.Structs))
 

@@ -6,6 +6,7 @@ package sourcepkg
 import (
 	"github.com/hashicorp/mog/internal/e2e/core"
 	"github.com/hashicorp/mog/internal/e2e/core/inner"
+	"github.com/hashicorp/mog/internal/e2e/sourcepkg/outer"
 )
 
 // Node source structure for e2e testing mog.
@@ -23,6 +24,9 @@ type Node struct {
 	Meta map[string]interface{}
 	Work []Workload
 	// WorkPointer []*Workload
+	InnerLabel  string
+	InnerLabel2 outer.Label
+	InnerLabel3 LocalLabel
 
 	O *core.Other
 	I inner.Inner
@@ -67,6 +71,8 @@ type Node struct {
 
 type StringSlice []string
 type WorkloadSlice []Workload
+
+type LocalLabel string
 
 // mog annotation:
 //
