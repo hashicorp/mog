@@ -3,7 +3,7 @@ module github.com/hashicorp/mog
 go 1.20
 
 require (
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/rboyer/safeio v0.2.2
 	github.com/stretchr/testify v1.8.3
 	golang.org/x/tools v0.11.1
