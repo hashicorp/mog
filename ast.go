@@ -342,8 +342,29 @@ func newAssignStmtStructsAndPointers(
 	case !leftPtr && rightPtr:
 		// Pointer to Value
 		//
-		// <left> = *<right>
-		return astAssign(left, &ast.StarExpr{X: right})
+		// if <right> != nil {
+		//   <left> = *<right>
+		// } else {
+		//   var z <left_type>
+		//   <left> = z
+		// }
+		leftPtrType, leftPtr := leftType.(*ast.StarExpr)
+
+		leftRealType := leftType
+		if leftPtr {
+			leftRealType = leftPtrType.X
+		}
+
+		return &ast.IfStmt{
+			Cond: astIsNotNil(right),
+			Body: &ast.BlockStmt{List: []ast.Stmt{
+				astAssign(left, &ast.StarExpr{X: right}),
+			}},
+			Else: &ast.BlockStmt{List: []ast.Stmt{
+				astDeclare(varNamePlaceholder, leftRealType),
+				astAssign(left, &ast.Ident{Name: varNamePlaceholder}),
+			}},
+		}
 	case leftPtr && !rightPtr:
 		// Value to Pointer
 		//

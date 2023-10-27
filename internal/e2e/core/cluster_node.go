@@ -12,6 +12,8 @@ type ClusterNode struct {
 	Label Label
 	// Labels []Label
 	// WorkPointer []*Workload
+	Flag   *bool
+	Number uint32
 
 	O *Other
 	I inner.Inner
@@ -55,6 +57,7 @@ type ClusterNode struct {
 }
 
 type StringSlice []string
+
 type WorkloadSlice []*Workload
 
 type Workload struct {
