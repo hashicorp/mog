@@ -345,9 +345,9 @@ func newAssignStmtStructsAndPointers(
 		// if <right> != nil {
 		//   <left> = *<right>
 		// } else {
-		//   <left> = nil
+		//   var z <left_type>
+		//   <left> = z
 		// }
-
 		leftPtrType, leftPtr := leftType.(*ast.StarExpr)
 
 		leftRealType := leftType
