@@ -12,7 +12,7 @@ type ClusterNode struct {
 	Label Label
 	// Labels []Label
 	// WorkPointer []*Workload
-	Flag *bool
+	Flag   *bool
 	Number uint32
 
 	O *Other

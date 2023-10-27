@@ -342,8 +342,6 @@ func newAssignStmtStructsAndPointers(
 	case !leftPtr && rightPtr:
 		// Pointer to Value
 		//
-		// <left> = *<right>
-
 		// if <right> != nil {
 		//   <left> = *<right>
 		// } else {
@@ -351,7 +349,6 @@ func newAssignStmtStructsAndPointers(
 		// }
 
 		leftPtrType, leftPtr := leftType.(*ast.StarExpr)
-		// _, rightPtr := rightType.(*ast.StarExpr)
 
 		leftRealType := leftType
 		if leftPtr {
@@ -368,8 +365,6 @@ func newAssignStmtStructsAndPointers(
 				astAssign(left, &ast.Ident{Name: varNamePlaceholder}),
 			}},
 		}
-
-		// return astAssign(left, &ast.StarExpr{X: right})
 	case leftPtr && !rightPtr:
 		// Value to Pointer
 		//
