@@ -19,6 +19,8 @@ type Node struct {
 	ID     string
 	Weight int64
 	Label  string
+	Flag   bool
+	Number *uint32
 	// Labels []string
 	Meta map[string]interface{}
 	Work []Workload
@@ -66,6 +68,7 @@ type Node struct {
 }
 
 type StringSlice []string
+
 type WorkloadSlice []Workload
 
 // mog annotation:

@@ -10,6 +10,13 @@ func NodeToCore(s *Node, t *core.ClusterNode) {
 	}
 	t.ID = s.ID
 	t.Label = core.Label(s.Label)
+	t.Flag = &s.Flag
+	if s.Number != nil {
+		t.Number = *s.Number
+	} else {
+		var x uint32
+		t.Number = x
+	}
 	t.O = s.O
 	t.I = s.I
 	WorkloadToCore(&s.F1, &t.F1)
@@ -31,7 +38,12 @@ func NodeToCore(s *Node, t *core.ClusterNode) {
 	{
 		t.S3 = make([]string, len(s.S3))
 		for i := range s.S3 {
-			t.S3[i] = *s.S3[i]
+			if s.S3[i] != nil {
+				t.S3[i] = *s.S3[i]
+			} else {
+				var x string
+				t.S3[i] = x
+			}
 		}
 	}
 	{
@@ -112,7 +124,12 @@ func NodeToCore(s *Node, t *core.ClusterNode) {
 		t.M3 = make(map[string]string, len(s.M3))
 		for k, v := range s.M3 {
 			var y string
-			y = *v
+			if v != nil {
+				y = *v
+			} else {
+				var x string
+				y = x
+			}
 			t.M3[k] = y
 		}
 	}
@@ -173,6 +190,13 @@ func NodeFromCore(t *core.ClusterNode, s *Node) {
 	}
 	s.ID = t.ID
 	s.Label = string(t.Label)
+	if t.Flag != nil {
+		s.Flag = *t.Flag
+	} else {
+		var x bool
+		s.Flag = x
+	}
+	s.Number = &t.Number
 	s.O = t.O
 	s.I = t.I
 	WorkloadFromCore(&t.F1, &s.F1)
@@ -200,7 +224,12 @@ func NodeFromCore(t *core.ClusterNode, s *Node) {
 	{
 		s.S4 = make([]string, len(t.S4))
 		for i := range t.S4 {
-			s.S4[i] = *t.S4[i]
+			if t.S4[i] != nil {
+				s.S4[i] = *t.S4[i]
+			} else {
+				var x string
+				s.S4[i] = x
+			}
 		}
 	}
 	{
@@ -277,7 +306,12 @@ func NodeFromCore(t *core.ClusterNode, s *Node) {
 		s.M4 = make(map[string]string, len(t.M4))
 		for k, v := range t.M4 {
 			var y string
-			y = *v
+			if v != nil {
+				y = *v
+			} else {
+				var x string
+				y = x
+			}
 			s.M4[k] = y
 		}
 	}
