@@ -141,6 +141,11 @@ func TestImports(t *testing.T) {
 		assert.DeepEqual(t, expected.hasAlias, imp.hasAlias)
 	})
 
+	t.Run("ReservedWorkAlias", func(t *testing.T) {
+		imp.Add("", "example.com/some/foo/go")
+		assert.Equal(t, "gopkg", imp.AliasFor("example.com/some/foo/go"))
+	})
+
 	t.Run("AliasFor", func(t *testing.T) {
 		imp.Add("somefoo", "example.com/some/foo")
 		imp.Add("", "example.com/stars")
