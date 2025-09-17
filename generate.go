@@ -429,6 +429,10 @@ func (i *imports) Add(alias string, pkgPath string) {
 	hasAlias := false
 	if alias == "" {
 		alias = path.Base(pkgPath)
+		if alias == "go" {
+			hasAlias = true
+			alias = "gopkg"
+		}
 	} else {
 		hasAlias = true
 	}

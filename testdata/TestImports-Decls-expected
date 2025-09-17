@@ -3,5 +3,6 @@ package src
 import (
 	"example.com/foo"
 	somefoo "example.com/some/foo"
+	gopkg "example.com/some/foo/go"
 	"example.com/stars"
 )
