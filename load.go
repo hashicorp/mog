@@ -58,10 +58,11 @@ type handlePkgLoadErr func(pkg *packages.Package) error
 
 // loadSourceStructs scans the provided package for struct definitions that
 // have mog annotations.
-func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (sourcePkg, error) {
+func loadSourceStructs(path string, workDir string, tags string, handleErr handlePkgLoadErr) (sourcePkg, error) {
 	p := sourcePkg{Structs: map[string]structDecl{}}
 	cfg := &packages.Config{
 		Mode: modeLoadAll,
+		Dir:  workDir,
 	}
 	if tags == "" {
 		tags = os.Getenv("GOTAGS")
@@ -105,7 +106,11 @@ func loadSourceStructs(path string, tags string, handleErr handlePkgLoadErr) (so
 	}
 
 	{
-		fi, err := os.Stat(path)
+		fsPath := path
+		if workDir != "" {
+			fsPath = filepath.Join(workDir, path)
+		}
+		fi, err := os.Stat(fsPath)
 		if err != nil {
 			return p, err
 		}
@@ -221,6 +226,7 @@ var modeLoadAll = packages.NeedName |
 	packages.NeedFiles |
 	packages.NeedCompiledGoFiles |
 	packages.NeedImports |
+	packages.NeedModule |
 	packages.NeedDeps |
 	packages.NeedTypes |
 	packages.NeedSyntax |
@@ -295,10 +301,11 @@ type targetStruct struct {
 	Fields []*types.Var
 }
 
-func loadTargetStructs(names []string, tags string) (map[string]targetPkg, error) {
+func loadTargetStructs(names []string, workDir string, tags string) (map[string]targetPkg, error) {
 	mode := packages.NeedTypes | packages.NeedTypesInfo | packages.NeedName
 	cfg := &packages.Config{
 		Mode: mode,
+		Dir:  workDir,
 	}
 	if tags == "" {
 		tags = os.Getenv("GOTAGS")

@@ -35,6 +35,7 @@ func run(args []string) error {
 
 type options struct {
 	source                  string
+	moduleWorkDir           string
 	ignorePackageLoadErrors bool
 	tags                    string
 }
@@ -57,7 +58,8 @@ func setupFlags(name string) (*flag.FlagSet, *options) {
 	// TODO: make this a positional arg, set a Usage func to document it
 	flags.StringVar(&opts.source, "source", ".", "package path for source structs")
 
-	// TODO: make this a positional arg, set a Usage func to document it
+	flags.StringVar(&opts.moduleWorkDir, "modworkdir", "", "module working directory to run from")
+
 	flags.StringVar(&opts.tags, "tags", ".", "build tags to be passed when parsing the packages")
 
 	flags.BoolVar(&opts.ignorePackageLoadErrors, "ignore-package-load-errors", false,
@@ -70,7 +72,7 @@ func runMog(opts options) error {
 		return fmt.Errorf("missing required source package")
 	}
 
-	sources, err := loadSourceStructs(opts.source, opts.tags, opts.handlePackageLoadErrors)
+	sources, err := loadSourceStructs(opts.source, opts.moduleWorkDir, opts.tags, opts.handlePackageLoadErrors)
 	if err != nil {
 		return fmt.Errorf("failed to load source from %s: %w", opts.source, err)
 	}
@@ -85,7 +87,7 @@ func runMog(opts options) error {
 		return nil
 	}
 
-	targets, err := loadTargetStructs(targetPackages(cfg.Structs), opts.tags)
+	targets, err := loadTargetStructs(targetPackages(cfg.Structs), opts.moduleWorkDir, opts.tags)
 	if err != nil {
 		return fmt.Errorf("failed to load targets: %w", err)
 	}
