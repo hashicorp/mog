@@ -12,6 +12,7 @@ import (
 	"go/token"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 
@@ -429,6 +430,12 @@ func (i *imports) Add(alias string, pkgPath string) {
 	hasAlias := false
 	if alias == "" {
 		alias = path.Base(pkgPath)
+		// For Go module v2+ paths (e.g. github.com/foo/bar/api/v2), path.Base
+		// returns "v2" but the package is still declared as "api". Fall back to
+		// the parent segment so the generated qualifier matches the package name.
+		if regexp.MustCompile(`^v\d+$`).MatchString(alias) {
+			alias = path.Base(path.Dir(pkgPath))
+		}
 		if alias == "go" {
 			hasAlias = true
 			alias = "gopkg"
